@@ -174,12 +174,18 @@ export function run(input) {
       value = doubled ? text.slice(open + 1, q).replaceAll('""', '"') : text.slice(open + 1, q);
     } else {
       // A quoted field spanning lines: each CRLF and each lone CR inside it is one LF, and
-      // each is one line. The content is small next to a whole case, so a direct pass is fine.
+      // each is one line (a CRLF counts once, not once for its CR and once for its LF).
+      // The content is small next to a whole case, so a direct pass is fine.
       const content = text.slice(open + 1, q);
       let breaks = 0;
       for (let i = 0; i < content.length; i++) {
         const ch = content.charCodeAt(i);
-        if (ch === 10 || ch === 13) breaks += 1;
+        if (ch === 10) {
+          breaks += 1;
+        } else if (ch === 13) {
+          breaks += 1;
+          if (i + 1 < content.length && content.charCodeAt(i + 1) === 10) i += 1;
+        }
       }
       line += breaks;
       value = content.replace(/\r\n?/g, '\n');
