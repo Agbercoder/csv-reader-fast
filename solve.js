@@ -165,18 +165,18 @@ export function run(input) {
       readUnquoted('"');
       return;
     }
+    // Slice the quoted content once and look for line breaks inside it only: scanning
+    // the whole text for the next LF or CR from here would run past the closing quote.
+    const content = text.slice(open + 1, q);
+    const hasNL = content.indexOf('\n') !== -1;
+    const hasCR = content.indexOf('\r') !== -1;
     let value;
-    const nl = text.indexOf('\n', open + 1);
-    const hasNL = nl !== -1 && nl < q;
-    const cr = text.indexOf('\r', open + 1);
-    const hasCR = cr !== -1 && cr < q;
     if (!hasNL && !hasCR) {
-      value = doubled ? text.slice(open + 1, q).replaceAll('""', '"') : text.slice(open + 1, q);
+      value = doubled ? content.replaceAll('""', '"') : content;
     } else {
       // A quoted field spanning lines: each CRLF and each lone CR inside it is one LF, and
       // each is one line (a CRLF counts once, not once for its CR and once for its LF).
       // The content is small next to a whole case, so a direct pass is fine.
-      const content = text.slice(open + 1, q);
       let breaks = 0;
       for (let i = 0; i < content.length; i++) {
         const ch = content.charCodeAt(i);
