@@ -51,6 +51,14 @@ export function run(input) {
   let recordLine = 1;
   let recordRow = null;
 
+  // The line the current field sits on: le the index of its next LF, or the text's end,
+  // leNL whether le is a real LF. A field never crosses its own line's end, so the readers
+  // reuse le instead of scanning for the next LF field after field; it is stale (pos past
+  // it) as soon as a line break or a multi-line quoted field is consumed, and is then
+  // re-found from the new pos.
+  let le = -1;
+  let leNL = false;
+
   // Scratch shared by the field readers: the field just read and how it ended.
   let fv = '';
   let fe = END;
@@ -63,8 +71,13 @@ export function run(input) {
   // never closed is re-read as unquoted). Jumps to the next comma or line break with indexOf;
   // a stray CR before the field ends falls back to the slow loop below. Sets fv/fe.
   function readUnquoted(init) {
+    if (pos > le) {
+      const ni = text.indexOf('\n', pos);
+      le = ni === -1 ? len : ni;
+      leNL = ni !== -1;
+    }
     const c = text.indexOf(',', pos);
-    const n = text.indexOf('\n', pos);
+    const n = leNL ? le : -1;
     let end;
     let isComma;
     let isNL;
