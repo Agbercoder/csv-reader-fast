@@ -21,8 +21,10 @@ const INPUT_DIR = process.env.MAKEFUN_INPUT_DIR ?? '/input';
 const OUTPUT_DIR = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 
 const cases = JSON.parse(readFileSync(join(INPUT_DIR, 'cases.json'), 'utf8')) as { id: string; input: unknown }[];
-const answers: unknown[] = [];
-for (const c of cases) answers.push(run(c.input));
+// One answer per case, in the cases' order: size the array up front and fill it by index
+// instead of growing it with a push per case.
+const answers: unknown[] = new Array(cases.length);
+for (let i = 0; i < cases.length; i++) answers[i] = run(cases[i]!.input);
 // The harness mounts /output for the entry, but a local run has no such mount: make the
 // directory first so the same program answers the cases the same way in both places.
 mkdirSync(OUTPUT_DIR, { recursive: true });
